@@ -1,0 +1,104 @@
+---
+title: "GS stoc"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+
+## Importing
+```{r}
+#stock<-read.csv("/Users/jinseop/Desktop/GS.csv", header=T); stock
+#plot.ts(x=stock$Date, y=stock$Close, type="l")
+```
+## d
+```{r}
+library(quantmod); library(tseries); library(forecast)
+```
+```{r}
+loadSymbols('TECHM.NS', from='2012-01-01', to='2015-01-01')
+TECHM.NS[,4]->stock_price
+```
+# Compoute the log returns for the stock
+```{r}
+loadSymbols("AMZN", from="2008-01-01", to="2018-10-20")
+AMZN_log<-dailyReturn(Ad(AMZN), type='log')
+chartSeries(AMZN);chartSeries(AMZN_log)
+chartSeries(AMZN, TA='addBBands(); addVo(); addMACD()')
+library(PerformanceAnalytics)
+loadSymbols("GOOGL", from="2008-01-01", to="2018-10-20")
+loadSymbols("AAPL", from="2008-01-01", to="2018-10-20")
+loadSymbols("FB", from="2008-01-01", to="2018-10-20")
+data<-cbind(diff(log(Cl(AMZN))),diff(log(Cl(GOOGL))), diff(log(Cl(AAPL))), diff(log(Cl(FB))))
+chart.Correlation(data)
+```
+
+#Price Prediction
+```{r}
+AMZN_mean_log<-mean(AMZN_log)
+sd_AMZN<-sd(AMZN_log)
+testsim<-rep(NA,1000)
+price<-rep(NA, 252*4)
+
+#simulation
+price[1]<-as.numeric(AMZN$AMZN.Adjusted[length(AMZN$AMZN.Adjusted),])
+for(i in 2:length(testsim)){
+  price[i]<-price[i-1]*exp(rnorm(1,AMZN_mean_log, sd_AMZN))
+}
+random_data<-cbind(price,1:(252*4))
+colnames(random_data)<-c("Price","Day")
+random_data<-as.data.frame(random_data)
+#random_data%>%ggplot(aes(Day,Price))+geom_line()+labs(title="Amazon (AMZN) price simulation for 4 years")+theme_bw()
+
+plot(x=random_data$Day, y=random_data$Price, type="l", xlab="day after today", ylab=" predicted price", main="Amazon's predicted stock price")
+```
+```{r}
+N<-500
+mc_matrix<-matrix(nrow=252*4, ncol=N)
+mc_matrix[1,1]<-as.numeric(AMZN$AMZN.Adjusted[length(AMZN$AMZN.Adjusted),])
+#mc_matrix[1,1]
+#AMZN$AMZN.Adjusted[length(AMZN$AMZN.Adjusted),]
+
+for (j in 1:ncol(mc_matrix)){
+  mc_matrix[1,j]<-as.numeric(AMZN$AMZN.Adjusted[length(AMZN$AMZN.Adjusted),])
+for (i in 2:nrow(mc_matrix)){
+  mc_matrix[i,j]<-mc_matrix[i-1,j]*exp(rnorm(1,AMZN_mean_log,sd_AMZN))
+}
+}
+name<-str_c("Sim",seq(1,500))
+name<-c("Day",name)
+final_mat<-cbind(1:(252*4),mc_matrix)
+final_mat<-as.tibble(final_mat)
+colnames(final_mat)<-name
+
+
+#ggplot(data=final_mat, mapping= aes(Day,Price ))
+#final_mat%>%gather("Simulation","Price",2:501)%>%ggplot(aes(x=Day,y=Price,Group=Simulation))
+```
+
+
+
+
+
+
+
+
+```{r}
+simm<-rnorm(252*4, AMZN_mean_log, sd_AMZN)
+simul<-tibble(c(1,1+simm));colnames(simul)<-c("return")
+simul
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
