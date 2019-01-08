@@ -1,0 +1,47 @@
+---
+title: "Kospi volatility model"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## import data
+```{r}
+library(quantmod); library(tseries); library(forecast)
+Kospi<-read.csv("/Users/jinseop/Desktop/funstuff/kospi.csv", header=T)
+```
+## head 
+```{r}
+head(Kospi)
+str(Kospi)
+```
+```{r}
+Kospi.price<-Kospi$Adj.Close; Kospi.vol<-Kospi$Volume; Kospi.price<-as.integer(Kospi.price)
+Kospi.price<-Kospi.price[!is.na(Kospi.price)]
+yield=NA
+for(i in 2 :length(Kospi.price))
+  yield[i]=(Kospi.price[i]-Kospi.price[i-1])/Kospi.price[i-1]
+yield1<-cbind(yield,1:1226)
+colnames(yield1)<-c("Yield","Day")
+yield1<-as.data.frame(yield1)
+```
+
+```{r}
+yield1; table(is.na(yield1))
+mean(yield1$Yield, na.rm=T)->mean.y
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
