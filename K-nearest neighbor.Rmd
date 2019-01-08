@@ -1,0 +1,76 @@
+---
+title: "KNN"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+```{r}
+library(class)
+library(kknn)
+library(e1071)
+library(caret)
+library(MASS)
+library(reshape2)
+library(ggplot2)
+library(kernlab)
+```
+```{r}
+data("Pima.te")
+str(Pima.te)
+data("Pima.tr")
+str(Pima.tr)
+pima<-rbind(Pima.tr, Pima.te)
+str(pima)
+pima.melt<-melt(pima, id.var="type")
+ggplot(data=pima.melt, aes(x=type, y= value))+geom_boxplot()+facet_wrap(~variable, ncol=5)
+```
+```{r}
+pima.scale<-data.frame(scale(pima[,-8]))
+str(pima.scale)
+pima.scale$type<-pima$type
+pima.scale.melt<-melt(pima.scale, id.var="type")
+ggplot(data=pima.scale.melt, aes(x=type, y=value))+geom_boxplot()+facet_wrap(~variable, ncol=5)
+set.seed(502)
+ind<-sample(2, nrow(pima.scale), replace=T, prob=c(0.7,0.3))
+train<-pima.scale[ind==1,]
+test<-pima.scale[ind==2,]
+grid1<-expand.grid(.k=seq(2,20, by=1))
+control<-trainControl(method="cv")
+knn.train<-train(type~., data=train, method="knn", trControl=control, tuneGrid=grid1)
+knn.train #17 is the best estimator
+knn.test<-knn(train[,-8], test[,-8], train[,8], k=17)
+table(knn.test, test$type)
+confusionMatrix(knn.test, test$type)
+kknn.train<-train.kknn(type~., data=train, kmax=25, distance=2, kernel = c("rectangular", "triangular", "epanechnikov"))
+plot(kknn.train)
+kknn.pred<-predict(kknn.train, newdata=test)
+table(kknn.pred, test$type)
+confusionMatrix(table(kknn.pred, test$type))
+```
+
+                                 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
